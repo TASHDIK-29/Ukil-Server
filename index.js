@@ -174,11 +174,10 @@ async function run() {
         // Get Advocates
         app.get('/advocates', async (req, res) => {
             try {
-                // const { search, brand, category, minPrice, maxPrice, currentPage, sort } = req.query;
-                // console.log(search, brand, category, minPrice, maxPrice, currentPage, sort);
+                const { city, practiceArea } = req.query;
+                // console.log(city, practiceArea);
 
                 // Build the query object
-                let query = {};
 
                 // if (search) {
                 //     query.$or = [
@@ -187,24 +186,15 @@ async function run() {
                 //     ];
                 // }
 
-                // if (brand && brand != "All") {
-                //     query.Brand = brand; // Direct match for a single brand
-                // }
+                let query = {};
+                if (city != "All") {
+                    query.city = city; // Direct match for a single brand
+                }
 
-                // if (category && category != "All") {
-                //     query.Category = category; // Direct match for a single category
-                // }
+                if (practiceArea != "All") {
+                    query.practiceArea = practiceArea; // Direct match for a single category
+                }
 
-                // if (minPrice && maxPrice) {
-                //     query.Price = { $gte: parseFloat(minPrice), $lte: parseFloat(maxPrice) };
-                // } else if (minPrice) {
-                //     query.Price = { $gte: parseFloat(minPrice) };
-                // } else if (maxPrice) {
-                //     query.Price = { $lte: parseFloat(maxPrice) };
-                // }
-
-
-                
 
                 // Fetch products from MongoDB based on the query
                 const advocates = await advocatesCollection.find(query).toArray();
