@@ -3,7 +3,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -36,6 +36,7 @@ async function run() {
 
         const advocatesCollection = client.db("Ukil").collection("advocates");
         const usersCollection = client.db("Ukil").collection("users");
+        const caseRequestsCollection = client.db("Ukil").collection("caseRequests");
 
         const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -161,6 +162,16 @@ async function run() {
             res.send(advocate);
         })
 
+        // Advocate Detail by Id for User
+        app.get('/advocateDetail', async (req, res) => {
+            const id = req.query.id;
+            const query = { _id: new ObjectId(id) };
+
+            const advocate = await advocatesCollection.findOne(query);
+
+            res.send(advocate);
+        })
+
         // User info by email
         app.get('/user', verifyToken, async (req, res) => {
             const email = req.query.email;
@@ -212,6 +223,16 @@ async function run() {
                 // console.log('does not hit');
             }
         });
+
+
+        // Case Request
+        app.post('/caseRequest', async (req, res) => {
+            const requestInfo = req.body;
+            const result = await caseRequestsCollection.insertOne(requestInfo);
+
+            res.send(result);
+        })
+
 
 
 
