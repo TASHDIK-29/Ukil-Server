@@ -42,7 +42,7 @@ async function run() {
 
         // middleware
         const verifyToken = (req, res, next) => {
-            console.log('inside verify', req.headers.authorization);
+            // console.log('inside verify', req.headers.authorization);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'Unauthorized access!' })
             }
@@ -159,7 +159,17 @@ async function run() {
 
             const advocate = await advocatesCollection.findOne(query);
 
-            res.send(advocate);
+            const requestsQuery = { advocateId: advocate._id.toString() };
+
+            const caseRequests = await caseRequestsCollection
+                .find(requestsQuery)
+                .sort({ requestedAt: -1 }) // Sort by latest requestedAt
+                .toArray();
+
+            // console.log("Advocate ID =", advocate._id);
+            // console.log("Requests =", caseRequests);
+
+            res.status(200).json({ advocate, caseRequests });
         })
 
         // Advocate Detail by Id for User
@@ -228,12 +238,23 @@ async function run() {
         // Case Request
         app.post('/caseRequest', async (req, res) => {
             const requestInfo = req.body;
+            requestInfo.requestedAt = new Date();
             const result = await caseRequestsCollection.insertOne(requestInfo);
 
             res.send(result);
         })
 
+        // Get Case Request
+        // app.get('/caseRequest', async (req, res) => {
+        //     const { id } = req.query;
 
+        //     const data = await collection
+        //         .find({})
+        //         .sort({ createdAt: -1 }) // Sort by latest createdAt
+        //         .toArray();
+
+        //     res.status(200).json(data);
+        // });
 
 
 
