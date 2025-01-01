@@ -239,6 +239,7 @@ async function run() {
         app.post('/caseRequest', async (req, res) => {
             const requestInfo = req.body;
             requestInfo.requestedAt = new Date();
+            requestInfo.status = "Pending";
             const result = await caseRequestsCollection.insertOne(requestInfo);
 
             res.send(result);
