@@ -37,6 +37,7 @@ async function run() {
         const advocatesCollection = client.db("Ukil").collection("advocates");
         const usersCollection = client.db("Ukil").collection("users");
         const caseRequestsCollection = client.db("Ukil").collection("caseRequests");
+        const articlesCollection = client.db("Ukil").collection("articles");
 
         const SECRET_KEY = process.env.SECRET_KEY;
 
@@ -166,10 +167,16 @@ async function run() {
                 .sort({ requestedAt: -1 }) // Sort by latest requestedAt
                 .toArray();
 
-            // console.log("Advocate ID =", advocate._id);
-            // console.log("Requests =", caseRequests);
+            // const requestsQuery = { advocateId: advocate._id.toString() };
 
-            res.status(200).json({ advocate, caseRequests });
+            const articles = await articlesCollection
+                .find(query)
+                .sort({ postedAt: -1 }) // Sort by latest requestedAt
+                .toArray();
+
+
+
+            res.status(200).json({ advocate, caseRequests, articles });
         })
 
         // Advocate Detail by Id for User
@@ -182,57 +189,6 @@ async function run() {
             res.send(advocate);
         })
 
-        // User info by email
-        // app.get('/user', verifyToken, async (req, res) => {
-        //     const userEmail = req.query.email;
-        //     const query = { email: userEmail };
-
-        //     const user = await usersCollection.findOne(query);
-
-        //     // Aggregate pipeline to fetch user requests and advocate names
-        //     const userRequests = await caseRequestsCollection.aggregate([
-        //         {
-        //             $match: { email: userEmail } // Match requests by user email
-        //         },
-        //         {
-        //             $sort: { requestedAt: -1 } // Sort by the latest requestedAt
-        //         },
-        //         {
-        //             $addFields: {
-        //                 advocateIdAsObjectId: { $toObjectId: "$advocateId" } // Convert string advocateId to ObjectId
-        //             }
-        //         },
-        //         {
-        //             $lookup: {
-        //                 from: 'advocates', // Collection to join
-        //                 localField: 'advocateIdAsObjectId', // Converted ObjectId field
-        //                 foreignField: '_id', // Advocate collection's _id
-        //                 as: 'advocateDetails' // Output array field
-        //             }
-        //         },
-        //         {
-        //             $unwind: {
-        //                 path: '$advocateDetails',
-        //                 preserveNullAndEmptyArrays: true // Include requests even if no advocate is found
-        //             }
-        //         },
-        //         {
-        //             $project: {
-        //                 advocateIdAsObjectId: 0, // Remove temporary conversion field
-        //                 advocateName: { $ifNull: ['$advocateDetails.name', 'Unknown Advocate'] },
-        //                 advocateDetails: 0 // Exclude full advocate details if not needed
-        //             }
-        //         }
-        //     ]).toArray();
-
-        //     if (!userRequests.length) {
-        //         return res.status(404).json({ message: 'No requests found for this user' });
-        //     }
-
-        //     res.status(200).json({ user, userRequests });
-
-        //     // res.send(user);
-        // })
 
         app.get('/user', verifyToken, async (req, res) => {
             try {
@@ -277,7 +233,7 @@ async function run() {
                             heading: 1,
                             message: 1,
                             requestedAt: 1,
-                            status: 1,                            
+                            status: 1,
                             advocateName: { $ifNull: ['$advocateDetails.name', 'Unknown Advocate'] },
                             advocateImage: { $ifNull: ['$advocateDetails.image', 'No img'] },
                         }
@@ -339,7 +295,7 @@ async function run() {
         });
 
 
-        // Case Request
+        // Post Case Request
         app.post('/caseRequest', async (req, res) => {
             const requestInfo = req.body;
             requestInfo.requestedAt = new Date();
@@ -349,17 +305,15 @@ async function run() {
             res.send(result);
         })
 
-        // Get Case Request
-        // app.get('/caseRequest', async (req, res) => {
-        //     const { id } = req.query;
+        // Post Articles
+        app.post('/article', async (req, res) => {
+            const articleDoc = req.body;
+            articleDoc.postedAt = new Date();
+            const result = await articlesCollection.insertOne(articleDoc);
 
-        //     const data = await collection
-        //         .find({})
-        //         .sort({ createdAt: -1 }) // Sort by latest createdAt
-        //         .toArray();
+            res.send(result);
+        })
 
-        //     res.status(200).json(data);
-        // });
 
 
 
