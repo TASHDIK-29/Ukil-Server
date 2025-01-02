@@ -186,7 +186,13 @@ async function run() {
 
             const advocate = await advocatesCollection.findOne(query);
 
-            res.send(advocate);
+            const articlesQuery = { advocateId : id };
+            const articles = await articlesCollection
+                .find(articlesQuery)
+                .sort({ postedAt: -1 }) // Sort by latest requestedAt
+                .toArray();
+
+            res.send({advocate ,articles});
         })
 
 
@@ -312,6 +318,14 @@ async function run() {
             const result = await articlesCollection.insertOne(articleDoc);
 
             res.send(result);
+        })
+
+
+        // Get All Articles
+        app.get('/articles', async (req, res) =>{
+            const articles = await articlesCollection.find().toArray();
+
+            res.send({articles});
         })
 
 
