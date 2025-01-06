@@ -74,7 +74,7 @@ async function run() {
                 name: req.body.name,
                 email: req.body.email,
                 address: req.body.address,
-                city: req.body.city,
+                court: req.body.court,
                 number: req.body.number,
                 license: req.body.license,
                 yearOfPractice: req.body.yearOfPractice,
@@ -186,13 +186,13 @@ async function run() {
 
             const advocate = await advocatesCollection.findOne(query);
 
-            const articlesQuery = { advocateId : id };
+            const articlesQuery = { advocateId: id };
             const articles = await articlesCollection
                 .find(articlesQuery)
                 .sort({ postedAt: -1 }) // Sort by latest requestedAt
                 .toArray();
 
-            res.send({advocate ,articles});
+            res.send({ advocate, articles });
         })
 
 
@@ -261,7 +261,7 @@ async function run() {
         // Get Advocates
         app.get('/advocates', async (req, res) => {
             try {
-                const { city, practiceArea } = req.query;
+                const { selectedCourt, selectedField } = req.query;
                 // console.log(city, practiceArea);
 
                 // Build the query object
@@ -274,12 +274,12 @@ async function run() {
                 // }
 
                 let query = {};
-                if (city != "All") {
-                    query.city = city; // Direct match for a single brand
+                if (selectedCourt != "All") {
+                    query.court = selectedCourt; // Direct match for a single brand
                 }
 
-                if (practiceArea != "All") {
-                    query.practiceArea = practiceArea; // Direct match for a single category
+                if (selectedField != "All") {
+                    query.practiceArea = selectedField; // Direct match for a single category
                 }
 
 
@@ -322,11 +322,56 @@ async function run() {
 
 
         // Get All Articles
-        app.get('/articles', async (req, res) =>{
+        app.get('/articles', async (req, res) => {
             const articles = await articlesCollection.find().toArray();
 
-            res.send({articles});
+            res.send({ articles });
         })
+
+
+
+
+        // Advocates from diff areas based on experience for the home page
+        app.get('/advocates-by-practice-area', async (req, res) => {
+            try {
+                // Define the practice areas
+                const practiceAreas = ['Criminal Lawyer', 'Civil Lawyer', 'Family Lawyer', 'Corporate Lawyer'];
+
+                // Use $facet to fetch 3 advocates per practice area
+                const result = await advocatesCollection.aggregate([
+                    {
+                        $facet: {
+                            Criminal_Lawyer: [
+                                { $match: { practiceArea: 'Criminal Lawyer' } },
+                                { $sort: { yearOfPractice: -1 } }, // Sort by yearOfPractice or any other criteria
+                                { $limit: 3 }
+                            ],
+                            Civil_Lawyer: [
+                                { $match: { practiceArea: 'Civil Lawyer' } },
+                                { $sort: { yearOfPractice: -1 } },
+                                { $limit: 3 }
+                            ],
+                            Family_Lawyer: [
+                                { $match: { practiceArea: 'Family Lawyer' } },
+                                { $sort: { yearOfPractice: -1 } },
+                                { $limit: 3 }
+                            ],
+                            Corporate_Lawyer: [
+                                { $match: { practiceArea: 'Corporate Lawyer' } },
+                                { $sort: { yearOfPractice: -1 } },
+                                { $limit: 3 }
+                            ]
+                        }
+                    }
+                ]).toArray();
+
+                res.status(200).json(result[0]); // Send the first document from the array
+            } catch (error) {
+                console.error("Error fetching advocates by practice area:", error);
+                res.status(500).json({ message: 'Internal Server Error' });
+            }
+        });
+
 
 
 
