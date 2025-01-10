@@ -37,6 +37,7 @@ async function run() {
         const advocatesCollection = client.db("Ukil").collection("advocates");
         const usersCollection = client.db("Ukil").collection("users");
         const caseRequestsCollection = client.db("Ukil").collection("caseRequests");
+        const reviewsCollection = client.db("Ukil").collection("reviews");
         const articlesCollection = client.db("Ukil").collection("articles");
 
         const SECRET_KEY = process.env.SECRET_KEY;
@@ -186,13 +187,17 @@ async function run() {
 
             const advocate = await advocatesCollection.findOne(query);
 
-            const articlesQuery = { advocateId: id };
+            const articlesAndReviewQuery = { advocateId: id };
             const articles = await articlesCollection
-                .find(articlesQuery)
+                .find(articlesAndReviewQuery)
                 .sort({ postedAt: -1 }) // Sort by latest requestedAt
                 .toArray();
 
-            res.send({ advocate, articles });
+            const reviews = await reviewsCollection
+                .find(articlesAndReviewQuery)
+                .sort({ reviewedAt: -1 }) // Sort by latest requestedAt
+                .toArray();
+            res.send({ advocate, articles, reviews });
         })
 
 
@@ -307,6 +312,15 @@ async function run() {
             requestInfo.requestedAt = new Date();
             requestInfo.status = "Pending";
             const result = await caseRequestsCollection.insertOne(requestInfo);
+
+            res.send(result);
+        })
+
+        // Post Review
+        app.post('/review', async (req, res) => {
+            const reviewDoc = req.body;
+            reviewDoc.reviewedAt = new Date();
+            const result = await reviewsCollection.insertOne(reviewDoc);
 
             res.send(result);
         })
